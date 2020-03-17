@@ -39,6 +39,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.MultiValueMap;
 
 /**
+ * 这个类在springboot中被大量使用
  * Internal class used to evaluate {@link Conditional} annotations.
  *
  * @author Phillip Webb

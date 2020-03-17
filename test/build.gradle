@@ -1,5 +1,0 @@
-description = "test"
-
-dependencies {
-    compile(project(":spring-context"))
-}

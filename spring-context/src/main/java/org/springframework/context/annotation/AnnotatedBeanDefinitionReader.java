@@ -251,15 +251,20 @@ public class AnnotatedBeanDefinitionReader {
 			@Nullable BeanDefinitionCustomizer[] customizers) {
 
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+		//判断类是否需要跳过解析，主要是判断类上有没有加@Conditional注解等
+		//在springboot中大量被使用
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
-
+		//通过传入Supplier回调创建bean，正常流程是null
 		abd.setInstanceSupplier(supplier);
+
+		//@Scope注解的参数,如singleton prototype
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
+		//beanName生成规则,默认类名首字母小写
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
-
+		//给beanDefinition设置lazy primary Dependson
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
@@ -274,6 +279,7 @@ public class AnnotatedBeanDefinitionReader {
 				}
 			}
 		}
+		//自定义注解
 		if (customizers != null) {
 			for (BeanDefinitionCustomizer customizer : customizers) {
 				customizer.customize(abd);
@@ -282,6 +288,12 @@ public class AnnotatedBeanDefinitionReader {
 
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		/**
+		 * definitionHolder中包含beanName和beanDefinition
+		 * registry其实就是annotationConfigApplicationContext，在初始化等时候会调用父类等构造方法
+		 * 创建beanFactory
+		 * 这里是将beanDefinition注册到beanFactory
+		 */
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 

@@ -63,6 +63,10 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
+			// 首先这里的beanFactoryPostProcessors是手动注册的BeanFactoryPostProcessor
+			// beanFactory中所有的BeanFactoryPostProcessor，如果是BeanDefinitionRegistryPostProcessor类型的，
+			// 先执行，并且保存在registryProcessors中
+			// 其他类型的BeanFactoryPostProcessor保存在regularPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =

@@ -84,8 +84,12 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		//先执行父类GenericApplicationContext的构造方法,初始化beanFactory
+		//再执行本身的构造方法,创建一个读取器和扫描器
 		this();
+		//将类注册成bean，主要是将beanName和beanDefinition存入beanFactory
 		register(componentClasses);
+
 		refresh();
 	}
 
@@ -148,6 +152,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	//---------------------------------------------------------------------
 
 	/**
+	 * 可以注册单个bean，如加了@Component、@Service等
+	 * 也可以注册配置类，如AppConfig
+	 * 但是调用这个方法之后需要再调用refresh()方法才能生效，不然会报错
 	 * Register one or more component classes to be processed.
 	 * <p>Note that {@link #refresh()} must be called in order for the context
 	 * to fully process the new classes.
