@@ -59,11 +59,16 @@ final class PostProcessorRegistrationDelegate {
 		Set<String> processedBeans = new HashSet<>();
 
 		if (beanFactory instanceof BeanDefinitionRegistry) {
+			//beanFactory是DefaultListableBeanFactory实现了BeanDefinitionRegistry接口
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+			//定义两个list，如果beanFactoryPostProcessor实现了BeanDefinitionRegistryPostProcessor
+			//先执行postProcessBeanDefinitionRegistry，然后归一类
+			//剩下的归一类
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
-			// 首先这里的beanFactoryPostProcessors是手动注册的BeanFactoryPostProcessor
+			// 首先这里的beanFactoryPostProcessors是手动添加的BeanFactoryPostProcessor
+			// 没有手动添加就不会进入
 			// beanFactory中所有的BeanFactoryPostProcessor，如果是BeanDefinitionRegistryPostProcessor类型的，
 			// 先执行，并且保存在registryProcessors中
 			// 其他类型的BeanFactoryPostProcessor保存在regularPostProcessors
@@ -86,20 +91,35 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// 在beanFactory中维护一个list用来保存所有的beanNames
+			// postProcessorNames是所有类型为BeanDefinitionRegistryPostProcessor的beanNames
+			// 默认情况下，spring 会自己注册一个name为internalConfigurationAnnotationProcessor的类
+			// 这个类是ConfigurationClassPostProcessor
+			// 这个类是干什么用的呢？
+			// 因为spring的beanFactory需要解析和扫描
+			// 所以spring需要在beanFactory初始化的时候完成bean的扫描和解析
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+			//如果同时也实现了PriorityOrdered就放入currentRegistryProcessors
+			//同时在processedBeans添加，表示这个beanFactoryPostProcessor已经被执行了
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
 					processedBeans.add(ppName);
 				}
 			}
+			//排序，放入registryProcessors，执行BeanDefinitionRegistryPostProcessor接口的实现
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
+			// 如果实现了Ordered接口就放入currentRegistryProcessors
+			// 同时processedBeans中添加，表示表示这个beanFactoryPostProcessor已经被执行了
+			// 为什么要把PrioprityOrdered和Ordered接口区分开呢？
+			// 因为前者有更高的优先级，同样类型的才会比较getOrder的值
+			// 去看OrderComparator
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
@@ -107,12 +127,17 @@ final class PostProcessorRegistrationDelegate {
 					processedBeans.add(ppName);
 				}
 			}
+			//排序，放入registryProcessors，执行BeanDefinitionRegistryPostProcessor接口的实现
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 
 			// Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
+			// 因为BeanDefinitionRegistryPostProcessor的实现方法是去注册bean
+			// 里面可以注册普通bean也可以注册一个BeanDefinitionRegistryPostProcessor
+			// 因此上面执行这个接口的方法之后，还需要去遍历postProcessorNames看是否又有之前没执行过的BeanDefinitionRegistryPostProcessor
+			// 如果有就继续执行，放入processedBeans
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
@@ -131,6 +156,7 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			// 执行BeanFactoryPostProcessor接口的方法
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}

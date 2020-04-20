@@ -73,6 +73,8 @@ class ConditionEvaluator {
 	}
 
 	/**
+	 * 判断是否需要跳过解析
+	 * 如果没有加@Conditional注解，返回false
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
 	 * @param metadata the meta data
 	 * @param phase the phase of the call

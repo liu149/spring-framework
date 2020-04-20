@@ -165,11 +165,12 @@ class ConfigurationClassParser {
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, resourceLoader);
 	}
 
-
+	//解析配置类，如加了@Configuration的AppConfig
 	public void parse(Set<BeanDefinitionHolder> configCandidates) {
 		for (BeanDefinitionHolder holder : configCandidates) {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
+				//bd加了注解
 				if (bd instanceof AnnotatedBeanDefinition) {
 					parse(((AnnotatedBeanDefinition) bd).getMetadata(), holder.getBeanName());
 				}
@@ -188,7 +189,7 @@ class ConfigurationClassParser {
 						"Failed to parse configuration class [" + bd.getBeanClassName() + "]", ex);
 			}
 		}
-
+		//处理延迟加载
 		this.deferredImportSelectorHandler.process();
 	}
 
@@ -220,12 +221,15 @@ class ConfigurationClassParser {
 		return this.configurationClasses.keySet();
 	}
 
-
+	//解析@Configuration
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
+		//解析@Conditional判断是不是跳过解析，springboot中大量被使用
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
 
+		//configurationClasses是一个map，存放已经被解析过的configClass
+		//处理被加了@Import的情况，就是有其他类有加了@Import AppConfig
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null) {
 			if (configClass.isImported()) {
@@ -244,16 +248,20 @@ class ConfigurationClassParser {
 		}
 
 		// Recursively process the configuration class and its superclass hierarchy.
+		// SourceClass是一个简单的封装器，可以统一处理带注解的类，而不用关注他们是怎么被加载进来的
+		// 真正的解析@Configuration
+		// 递归解析配置类和它的父类
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
-
+		//
 		this.configurationClasses.put(configClass, configClass);
 	}
 
 	/**
+	 * 解析@Configuration
 	 * Apply processing and build a complete {@link ConfigurationClass} by reading the
 	 * annotations, members and methods from the source class. This method can be called
 	 * multiple times as relevant sources are discovered.
@@ -266,12 +274,14 @@ class ConfigurationClassParser {
 			ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
 			throws IOException {
 
+		//加了@Component注解的类都会去解析内部类，AppConfig上加了@Configuration，这个注解上又加了@Component，所以也会进
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first
 			processMemberClasses(configClass, sourceClass, filter);
 		}
 
 		// Process any @PropertySource annotations
+		// 处理@PropertySource
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
 				org.springframework.context.annotation.PropertySource.class)) {
@@ -285,20 +295,30 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
+		// 如果加了@ComponentScan,eg：AppConfig加了@ComponentScan，就先得到@ComponentScan注解的值
+		// 这里用Set接收是因为一个AppConfig可以加多个@ComponentScan
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
+		//如果有加@ComponentScan，并且不跳过普通类的注册，就会去解析
+		// 如何理解呢？就是AppConfig如果有加@Conditional注解，那里面的Condition的match方法返回的是false的话
+		// @ComponentScan就不会去解析了
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
 			for (AnnotationAttributes componentScan : componentScans) {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
+				// 扫描普通类，普通类在扫描完成的同时也注册到了BeanDefinitionMap
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
+				// 检查扫描出来的类中是否还有加了@Configuration、@Import等
+				// 有就递归执行
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
 					}
+					//检查是不是一个配置类，何谓配置类
+					//@Configuration  会标识成full、@Import、四个会标识成lite
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
@@ -307,9 +327,12 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @Import annotations
+		// 处理@Import注解，@Import可以传入三种不同的类:普通类、ImportSelector、BeanDefinitionRegistrar
+		// 但是这里处理完成之后并没有把bd放入beanDefinitionMap中，而是先放入一个lsit再在后面从list中取出来注册
 		processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
 
 		// Process any @ImportResource annotations
+		// 处理@ImportResource
 		AnnotationAttributes importResource =
 				AnnotationConfigUtils.attributesFor(sourceClass.getMetadata(), ImportResource.class);
 		if (importResource != null) {
@@ -549,36 +572,52 @@ class ConfigurationClassParser {
 		}
 	}
 
+	//处理@Import
+	//普通类
+	//ImportSelector
+	//BeanDefinitionRegistrar
 	private void processImports(ConfigurationClass configClass, SourceClass currentSourceClass,
 			Collection<SourceClass> importCandidates, Predicate<String> exclusionFilter,
 			boolean checkForCircularImports) {
-
+		//如果没加@Import直接返回
 		if (importCandidates.isEmpty()) {
 			return;
 		}
-
+		//检查循环引用
 		if (checkForCircularImports && isChainedImportOnStack(configClass)) {
 			this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
 		}
 		else {
 			this.importStack.push(configClass);
 			try {
+				// @Import的value方法返回的是一个class数组
+				// 针对三种不同的class做不同处理
 				for (SourceClass candidate : importCandidates) {
+					// 处理ImportSelector的情况，反射得到这个ImportSelector的类
+					// 先得到ImportSelector返回的字符串数组
+					// 又分为
 					if (candidate.isAssignable(ImportSelector.class)) {
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
 						Class<?> candidateClass = candidate.loadClass();
 						ImportSelector selector = ParserStrategyUtils.instantiateClass(candidateClass, ImportSelector.class,
 								this.environment, this.resourceLoader, this.registry);
+						//ImportSelector中需要排除的
 						Predicate<String> selectorFilter = selector.getExclusionFilter();
+						//exclusionFilter是spring内部自己写死的
+						//如果beanName是以annotation开头、sterotype开头的就返回false
 						if (selectorFilter != null) {
 							exclusionFilter = exclusionFilter.or(selectorFilter);
 						}
+						//如果是延迟加载的DeferredImportSelector，就存起来在后面统一执行
 						if (selector instanceof DeferredImportSelector) {
 							this.deferredImportSelectorHandler.handle(configClass, (DeferredImportSelector) selector);
 						}
 						else {
+							//这里就是处理@Import
+							//先得到ImportSelector返回的字符串数组
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames, exclusionFilter);
+							//递归处理
 							processImports(configClass, currentSourceClass, importSourceClasses, exclusionFilter, false);
 						}
 					}
@@ -594,6 +633,7 @@ class ConfigurationClassParser {
 					else {
 						// Candidate class not an ImportSelector or ImportBeanDefinitionRegistrar ->
 						// process it as an @Configuration class
+						// 处理普通类
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
 						processConfigurationClass(candidate.asConfigClass(configClass), exclusionFilter);
@@ -677,6 +717,7 @@ class ConfigurationClassParser {
 	}
 
 	/**
+	 * 工厂方法，传入class name 返回sourceclass
 	 * Factory method to obtain a {@link SourceClass} from a class name.
 	 */
 	SourceClass asSourceClass(@Nullable String className, Predicate<String> filter) throws IOException {
@@ -917,6 +958,7 @@ class ConfigurationClassParser {
 
 
 	/**
+	 * SourceClass是一个简单的封装器，可以统一处理带注解的类，而不用关注他们是怎么被加载进来的
 	 * Simple wrapper that allows annotated source classes to be dealt with
 	 * in a uniform manner, regardless of how they are loaded.
 	 */

@@ -1165,7 +1165,7 @@ public abstract class StringUtils {
 			}
 			if (!ignoreEmptyTokens || token.length() > 0) {
 				tokens.add(token);
-			}
+		}
 		}
 		return toStringArray(tokens);
 	}

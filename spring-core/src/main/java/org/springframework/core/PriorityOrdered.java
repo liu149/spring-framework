@@ -17,6 +17,7 @@
 package org.springframework.core;
 
 /**
+ * 实现这个接口可以控制springbean的实例化顺序，值越低越先创建
  * Extension of the {@link Ordered} interface, expressing a <em>priority</em>
  * ordering: {@code PriorityOrdered} objects are always applied before
  * <em>plain</em> {@link Ordered} objects regardless of their order values.

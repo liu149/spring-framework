@@ -241,6 +241,7 @@ final class AttributeMethods {
 
 
 	/**
+	 * 获取给定注解类型的属性
 	 * Get the attribute methods for the given annotation type.
 	 * @param annotationType the annotation type
 	 * @return the attribute methods for the annotation type
@@ -249,6 +250,7 @@ final class AttributeMethods {
 		if (annotationType == null) {
 			return NONE;
 		}
+		//cache是一个map，key为Annotation,value为AttributeMethods,先
 		return cache.computeIfAbsent(annotationType, AttributeMethods::compute);
 	}
 
