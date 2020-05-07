@@ -138,6 +138,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	// Internal helpers
 
 	private void startBeans(boolean autoStartupOnly) {
+		// 默认情况下，这里只有一个DefaultLifecycleProcessor
 		Map<String, Lifecycle> lifecycleBeans = getLifecycleBeans();
 		Map<Integer, LifecycleGroup> phases = new HashMap<>();
 		lifecycleBeans.forEach((beanName, bean) -> {
@@ -271,6 +272,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	// overridable hooks
 
 	/**
+	 * 获取所有的生命周期bean
 	 * Retrieve all applicable Lifecycle beans: all singletons that have already been created,
 	 * as well as all SmartLifecycle beans (even if they are marked as lazy-init).
 	 * @return the Map of applicable beans, with bean names as keys and bean instances as values

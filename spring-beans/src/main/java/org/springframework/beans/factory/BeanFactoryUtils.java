@@ -72,6 +72,7 @@ public abstract class BeanFactoryUtils {
 	}
 
 	/**
+	 * 工具类，返回bean的真实名称，因为有beanName是代理对象的名称，工厂方法返回的等
 	 * Return the actual bean name, stripping out the factory dereference
 	 * prefix (if any, also stripping repeated factory prefixes if found).
 	 * @param name the name of the bean

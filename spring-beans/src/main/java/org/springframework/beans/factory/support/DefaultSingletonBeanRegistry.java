@@ -212,6 +212,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				// 创建之前先检查当前是否正在创建
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -219,6 +220,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//这里去拿到bean、并且会调用BeanPostProcessor
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -606,7 +608,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
-	 * Exposes the singleton mutex to subclasses and external collaborators.
+	 * Exposes the singleton mutex to subclasses and external collaborators. 子类获取父类的singleton作为互斥锁
 	 * <p>Subclasses should synchronize on the given Object if they perform
 	 * any sort of extended singleton creation phase. In particular, subclasses
 	 * should <i>not</i> have their own mutexes involved in singleton creation,

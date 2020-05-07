@@ -58,6 +58,7 @@ import org.springframework.cglib.core.VisibilityPredicate;
 import org.springframework.cglib.core.WeakCacheKey;
 
 /**
+ * 生成动态子类开启方法级别的拦截，
  * Generates dynamic subclasses to enable method interception. This
  * class started as a substitute for the standard Dynamic Proxy support
  * included with JDK 1.3, but one that allowed the proxies to extend a
@@ -66,6 +67,7 @@ import org.springframework.cglib.core.WeakCacheKey;
  * have hooks which callback to user-defined interceptor
  * implementations.
  * <p>
+ * 最初的也是最通用的回调是MethodInterceptor，它在AOP中开启"环绕通知"，你可以在调用父类方法之前或者之后调用自定义代码
  * The original and most general callback type is the {@link MethodInterceptor}, which
  * in AOP terms enables "around advice"--that is, you can invoke custom code both before
  * and after the invocation of the "super" method. In addition you can modify the

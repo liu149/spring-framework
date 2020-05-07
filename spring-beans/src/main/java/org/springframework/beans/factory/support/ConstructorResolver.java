@@ -124,10 +124,11 @@ class ConstructorResolver {
 	 */
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
-
+		// 前面需要一个BeanWrapper，在这里实例化
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
+		// 需要使用的构造方法、参数
 		Constructor<?> constructorToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
@@ -138,6 +139,8 @@ class ConstructorResolver {
 		else {
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				// 第一次找到要使用的构造方法之后，存在这个变量里
+				// 以后再需要构造方法的时候直接从缓存中取
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached constructor...
@@ -153,6 +156,7 @@ class ConstructorResolver {
 		}
 
 		if (constructorToUse == null || argsToUse == null) {
+			// 如果没有已解析的构造方法，或者没有参数值,则需要去解析构造方法
 			// Take specified constructors, if any.
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
@@ -182,6 +186,7 @@ class ConstructorResolver {
 			}
 
 			// Need to resolve the constructor.
+			// 判断构造方法是否为空，判断是否根据构造方法自动注入
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;

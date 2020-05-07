@@ -69,6 +69,7 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 实现@Autowired和@Value
  * {@link org.springframework.beans.factory.config.BeanPostProcessor BeanPostProcessor}
  * implementation that autowires annotated fields, setter methods, and arbitrary
  * config methods. Such members to be injected are detected through annotations:
@@ -240,7 +241,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
 	}
 
-
+	//InjectionMetadata就是用来描述类上有加了@Autowired和@Value注解
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, beanType, null);
@@ -258,7 +259,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	public Constructor<?>[] determineCandidateConstructors(Class<?> beanClass, final String beanName)
 			throws BeanCreationException {
 
-		// Let's check for lookup methods here...
+		// 检查方法上是否加了@Lookup注解，包括所有父类
+		// Let's check for lookup methods here...，检查@Lookup
 		if (!this.lookupMethodsChecked.contains(beanName)) {
 			if (AnnotationUtils.isCandidateClass(beanClass, Lookup.class)) {
 				try {
@@ -291,7 +293,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			}
 			this.lookupMethodsChecked.add(beanName);
 		}
-
+		// 先从缓存中找
 		// Quick check on the concurrent map first, with minimal locking.
 		Constructor<?>[] candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 		if (candidateConstructors == null) {
@@ -301,6 +303,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				if (candidateConstructors == null) {
 					Constructor<?>[] rawCandidates;
 					try {
+						// 拿到声明的构造方法
 						rawCandidates = beanClass.getDeclaredConstructors();
 					}
 					catch (Throwable ex) {
@@ -311,13 +314,14 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					List<Constructor<?>> candidates = new ArrayList<>(rawCandidates.length);
 					Constructor<?> requiredConstructor = null;
 					Constructor<?> defaultConstructor = null;
-					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
+					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);// 找到主要的构造方法，这里没有去指定所以为null
 					int nonSyntheticConstructors = 0;
 					for (Constructor<?> candidate : rawCandidates) {
 						if (!candidate.isSynthetic()) {
 							nonSyntheticConstructors++;
 						}
 						else if (primaryConstructor != null) {
+							// 如果有指定主要的构造方法，肯定就选它了，只需要记录非合成的构造方法个数
 							continue;
 						}
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);

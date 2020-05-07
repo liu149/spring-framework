@@ -142,11 +142,14 @@ class ConfigurationClassBeanDefinitionReader {
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+
+		//处理@Bean
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
-
+		//处理@ImportResource
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		//处理ImportBeanDefinitionRegistrar
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 
@@ -220,6 +223,8 @@ class ConfigurationClassBeanDefinitionReader {
 		beanDef.setResource(configClass.getResource());
 		beanDef.setSource(this.sourceExtractor.extractSource(metadata, configClass.getResource()));
 
+		//如果@Bean加在一个static修饰的方法上
+		//那么它每次初始化都是
 		if (metadata.isStatic()) {
 			// static @Bean method
 			if (configClass.getMetadata() instanceof StandardAnnotationMetadata) {
@@ -243,7 +248,7 @@ class ConfigurationClassBeanDefinitionReader {
 		beanDef.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 		beanDef.setAttribute(org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor.
 				SKIP_REQUIRED_CHECK_ATTRIBUTE, Boolean.TRUE);
-
+		//给bd设置lazy、dependsOn等属性
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(beanDef, metadata);
 
 		Autowire autowire = bean.getEnum("autowire");
@@ -251,16 +256,19 @@ class ConfigurationClassBeanDefinitionReader {
 			beanDef.setAutowireMode(autowire.value());
 		}
 
+		//默认是设置为true，表示这个bean可以被其他的bean通过@Autowired注入
 		boolean autowireCandidate = bean.getBoolean("autowireCandidate");
 		if (!autowireCandidate) {
 			beanDef.setAutowireCandidate(false);
 		}
 
+		//初始化方法
 		String initMethodName = bean.getString("initMethod");
 		if (StringUtils.hasText(initMethodName)) {
 			beanDef.setInitMethodName(initMethodName);
 		}
 
+		//销毁方法
 		String destroyMethodName = bean.getString("destroyMethod");
 		beanDef.setDestroyMethodName(destroyMethodName);
 

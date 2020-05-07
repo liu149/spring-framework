@@ -88,6 +88,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		//先执行父类GenericApplicationContext的构造方法,初始化beanFactory
 		//再执行本身的构造方法,创建一个读取器和扫描器
 		//在创建读取器的时候，还会给beanFactory中添加一些默认的BeanFactoryPostProcessor和BeanPostProcessor
+		//如ConfigurationClassPostProcessor
 		this();
 		//将类注册成bean，主要是将beanName和beanDefinition存入beanFactory
 		register(componentClasses);

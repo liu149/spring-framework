@@ -75,6 +75,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
 /**
+ * BeanPostProcessor的实现
+ * 这个后置处理器包含对@PostConstruct、@PreDestroy的支持（通过继承InitDestroyAnnotationBeanPostProcessor）
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
  * that supports common Java annotations out of the box, in particular the JSR-250
  * annotations in the {@code javax.annotation} package. These common Java

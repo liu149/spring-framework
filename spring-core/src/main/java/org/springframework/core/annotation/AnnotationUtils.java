@@ -153,6 +153,10 @@ public abstract class AnnotationUtils {
 	}
 
 	/**
+	 * 确定给定的类是不是可以携带某个注解
+	 * 只要是jdk的注解，所有的类都可以使用
+	 * 给定的类是jdk的类或者类继承了Order接口就不可以使用
+	 * 其他的都可以
 	 * Determine whether the given class is a candidate for carrying the specified annotation
 	 * (at type, method or field level).
 	 * @param clazz the class to introspect
