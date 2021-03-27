@@ -38,4 +38,6 @@ rootProject.children.each {project ->
 	project.buildFileName = "${project.name}.gradle"
 }
 include 'test2'
+include 'testSpringMvc'
+include 'testSpringMvc2'
 

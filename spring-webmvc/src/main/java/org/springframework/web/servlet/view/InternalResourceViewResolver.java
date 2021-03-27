@@ -100,7 +100,7 @@ public class InternalResourceViewResolver extends UrlBasedViewResolver {
 		this.alwaysInclude = alwaysInclude;
 	}
 
-
+	// 创建一个InternalResourceView，设置url为 prefix + viewName + suffix, contentType， attribute等
 	@Override
 	protected AbstractUrlBasedView buildView(String viewName) throws Exception {
 		InternalResourceView view = (InternalResourceView) super.buildView(viewName);
