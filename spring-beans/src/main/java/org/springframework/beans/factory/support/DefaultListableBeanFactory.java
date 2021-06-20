@@ -881,7 +881,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}
 				}
 				else {
-					//getBean的时候会先执行BeanPostProcessor里面的方法
+					// getBean的时候会先执行BeanPostProcessor里面的方法
 					getBean(beanName);
 				}
 			}
@@ -909,7 +909,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	//---------------------------------------------------------------------
 	// Implementation of BeanDefinitionRegistry interface
 	//---------------------------------------------------------------------
-
+	// 将BeanDefinition注册到beanFactory中
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
@@ -926,7 +926,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						"Validation of bean definition failed", ex);
 			}
 		}
-
+		// beanFactory中有一个beanDefinitionMap专门存放beanDefinition
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
 			if (!isAllowBeanDefinitionOverriding()) {
@@ -970,6 +970,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			else {
 				// Still in startup registration phase
+				// 如果beanDefinition还没有添加
 				this.beanDefinitionMap.put(beanName, beanDefinition);
 				this.beanDefinitionNames.add(beanName);
 				removeManualSingletonName(beanName);

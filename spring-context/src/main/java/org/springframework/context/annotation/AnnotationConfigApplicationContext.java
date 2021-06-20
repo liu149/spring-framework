@@ -92,7 +92,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		this();
 		//将类注册成bean，主要是将beanName和beanDefinition存入beanFactory
 		register(componentClasses);
-
+		// 最核心的方法
 		refresh();
 	}
 

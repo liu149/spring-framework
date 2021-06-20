@@ -108,6 +108,7 @@ final class PostProcessorRegistrationDelegate {
 					processedBeans.add(ppName);
 				}
 			}
+
 			//排序，放入registryProcessors，执行BeanDefinitionRegistryPostProcessor接口的实现
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
 			registryProcessors.addAll(currentRegistryProcessors);

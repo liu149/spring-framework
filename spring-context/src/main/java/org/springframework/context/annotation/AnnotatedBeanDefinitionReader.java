@@ -265,7 +265,7 @@ public class AnnotatedBeanDefinitionReader {
 		abd.setScope(scopeMetadata.getScopeName());
 		//beanName生成规则,默认类名首字母小写
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
-		//给beanDefinition设置lazy primary Dependson
+		//给beanDefinition设置lazy primary Dependson等
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
@@ -286,12 +286,13 @@ public class AnnotatedBeanDefinitionReader {
 				customizer.customize(abd);
 			}
 		}
-
+		//只是BeanDefinition和beanName的封装，
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		//代理模型TODO
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 		/**
 		 * definitionHolder中包含beanName和beanDefinition
-		 * registry其实就是annotationConfigApplicationContext，在初始化等时候会调用父类等构造方法
+		 * registry其实就是AnnotationConfigApplicationContext，在初始化等时候会调用父类等构造方法
 		 * 创建beanFactory
 		 * 这里是将beanDefinition注册到beanFactory
 		 */

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.22">
+<file name="/Users/liuqi/workspace/spring-framework/testContext/src/main/java/com/lq/config/AppConfig.java">
+<error line="1" severity="error" message="header.missing" source="io.spring.javaformat.checkstyle.check.SpringHeaderCheck"/>
+<error line="3" severity="error" message="不应使用 &apos;.*&apos; 形式的导入 - org.springframework.context.annotation.* 。" source="com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck"/>
+</file>
+<file name="/Users/liuqi/workspace/spring-framework/testContext/src/main/java/com/lq/service/UserService.java">
+<error line="1" severity="error" message="header.mismatch" source="io.spring.javaformat.checkstyle.check.SpringHeaderCheck"/>
+</file>
+<file name="/Users/liuqi/workspace/spring-framework/testContext/src/main/java/com/lq/test/Test.java">
+<error line="1" severity="error" message="header.mismatch" source="io.spring.javaformat.checkstyle.check.SpringHeaderCheck"/>
+<error line="5" severity="error" message="&apos;org.springframework.context.annotation.AnnotationConfigApplicationContext&apos; 应与之前的导入语句通过空行隔开。" source="com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck"/>
+<error line="8" column="1" severity="error" message="工具类应隐藏 public 构造器。" source="com.puppycrawl.tools.checkstyle.checks.design.HideUtilityClassConstructorCheck"/>
+<error line="8" column="14" severity="error" message="Class name &apos;Test&apos; must not end with &apos;Test&apos; (checked pattern &apos;^[A-Z][a-zA-Z0-9_]*(?&lt;!Test)$&apos;)." source="com.puppycrawl.tools.checkstyle.checks.naming.TypeNameCheck"/>
+</file>
+</checkstyle>

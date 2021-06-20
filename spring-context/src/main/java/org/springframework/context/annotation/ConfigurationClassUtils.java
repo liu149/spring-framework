@@ -88,12 +88,15 @@ abstract class ConfigurationClassUtils {
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
 
 		String className = beanDef.getBeanClassName();
-		//是不是factoryBean
+
+		// factoryBean不在这里这里解析
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
 		}
 
 		AnnotationMetadata metadata;
+
+		// 正常流程走这
 		// 类名和metaData中的类名一致
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
@@ -126,14 +129,17 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 		}
-		//@Configuration注解的值
+
+		// @Configuration注解的值
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
-		//@Configuration默认proxyBeanMethods为true
-		//如果proxyMethods值为true，如AppConfig上加了@Configuration注解，就会给beanDefinition设置一个full的属性
+
+		// @Configuration默认proxyBeanMethods为true
+		// 如果proxyMethods值为true，如AppConfig上加了@Configuration注解，就会给beanDefinition设置一个full的属性
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
-		//如果加了@Component @ComponentScan @Import @ImportResource 方法上加了@Bean就给beanDefinition设置一个lite的属性
+
+		// 如果加了@Component @ComponentScan @Import @ImportResource 方法上加了@Bean就给beanDefinition设置一个lite的属性
 		else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}

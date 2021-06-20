@@ -170,7 +170,6 @@ class ConfigurationClassParser {
 		for (BeanDefinitionHolder holder : configCandidates) {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
-				//bd加了注解
 				if (bd instanceof AnnotatedBeanDefinition) {
 					parse(((AnnotatedBeanDefinition) bd).getMetadata(), holder.getBeanName());
 				}
@@ -221,17 +220,17 @@ class ConfigurationClassParser {
 		return this.configurationClasses.keySet();
 	}
 
-	//解析@Configuration
+	//解析配置类
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
 		//解析@Conditional判断是不是跳过解析，springboot中大量被使用
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
 
-		//configurationClasses是一个map，存放已经被解析过的configClass
-		//处理被加了@Import的情况，就是有其他类有加了@Import AppConfig
+		// configurationClasses是一个map，存放已经被解析过的configClass
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null) {
+			// 处理被加了@Import的情况，就是有其他类有加了@Import AppConfig
 			if (configClass.isImported()) {
 				if (existingClass.isImported()) {
 					existingClass.mergeImportedBy(configClass);
@@ -256,7 +255,7 @@ class ConfigurationClassParser {
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
-		//
+		// configurationClasses保存有配置类，会在后面解析如@Import @ImportResrouce和@Bean
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -274,7 +273,8 @@ class ConfigurationClassParser {
 			ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
 			throws IOException {
 
-		//加了@Component注解的类都会去解析内部类，AppConfig上加了@Configuration，这个注解上又加了@Component，所以也会进
+		// 如果配置类上加了@Component,一般@Service、@Configuration都继承了@Component
+		// 处理内部类
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first
 			processMemberClasses(configClass, sourceClass, filter);
@@ -299,12 +299,12 @@ class ConfigurationClassParser {
 		// 这里用Set接收是因为一个AppConfig可以加多个@ComponentScan
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
-		//如果有加@ComponentScan，并且不跳过普通类的注册，就会去解析
-		// 如何理解呢？就是AppConfig如果有加@Conditional注解，那里面的Condition的match方法返回的是false的话
-		// @ComponentScan就不会去解析了
+
+		// 获取@ComponentScan扫描都路径，进行解析
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
 			for (AnnotationAttributes componentScan : componentScans) {
+
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
 				// 扫描普通类，普通类在扫描完成的同时也注册到了BeanDefinitionMap
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =

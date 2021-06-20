@@ -660,6 +660,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * 准备工厂
+	 *
 	 * 配置工厂等标准特征，如上下文加载器和后置处理器
 	 * Configure the factory's standard context characteristics,
 	 * such as the context's ClassLoader and post-processors.
@@ -667,15 +669,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
+		// 设置beanFactory的类加载器，为什么beanFactory需要自己的类加载器
+		// TODO
 		beanFactory.setBeanClassLoader(getClassLoader());
-		//bean表达式解析器
+
+		// beanFactory本身是一张白纸
+		// 它需要什么功能，就添加相应的解析器或者注册器
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
-		//添加一个后置处理器
-		// 在beanFactory中添加ApplicationContextAwareProcessor，如果自定义类中有实现ApplicationContextAware就能拿到ApplicationContext
+		// beanFactory中维护一个list，里面包含多个后置处理器，最后会链式执行
+		// 实现ApplicationContextAwareProcessor可以将springContext注入到bean
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+
+		// beanFactory中维护一个list，里面的类，不能通过@Autowired注入
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -691,6 +699,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		// ApplicationListenerDetector的作用是在postProcessAfterInitialization会对bean进行判断
+		// 在AnnotationConfigApplicationContext维护有一个applicationEventMulticaster和applicationListeners
+		// 如果这个bean的类型是ApplicationListener，那么广播器和监听器中都会加入这个bean
+		// 当有事件发布的时候，事件就会传播到该bean
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
