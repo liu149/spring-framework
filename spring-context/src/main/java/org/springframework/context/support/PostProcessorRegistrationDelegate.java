@@ -61,6 +61,7 @@ final class PostProcessorRegistrationDelegate {
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			//beanFactory是DefaultListableBeanFactory实现了BeanDefinitionRegistry接口
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+
 			//定义两个list，如果beanFactoryPostProcessor实现了BeanDefinitionRegistryPostProcessor
 			//先执行postProcessBeanDefinitionRegistry，然后归一类
 			//剩下的归一类
@@ -100,7 +101,7 @@ final class PostProcessorRegistrationDelegate {
 			// 所以spring需要在beanFactory初始化的时候完成bean的扫描和解析
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
-			//如果同时也实现了PriorityOrdered就放入currentRegistryProcessors
+			//如果同时也实现了PriorityOrdered就放入currentRegistryProcessors,并且这个时候完成了bean的创建
 			//同时在processedBeans添加，表示这个beanFactoryPostProcessor已经被执行了
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
@@ -139,6 +140,9 @@ final class PostProcessorRegistrationDelegate {
 			// 里面可以注册普通bean也可以注册一个BeanDefinitionRegistryPostProcessor
 			// 因此上面执行这个接口的方法之后，还需要去遍历postProcessorNames看是否又有之前没执行过的BeanDefinitionRegistryPostProcessor
 			// 如果有就继续执行，放入processedBeans
+			/**
+			 *
+			 */
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
@@ -157,8 +161,12 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
-			// 执行BeanFactoryPostProcessor接口的方法
+			/**
+			 * 这里只有一个ConfigurationClassPostProcessor
+			 * 在这里完成配置类的解析
+			 */
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+			// 正常流程这里的regularPostProcessors是空的
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 
@@ -188,6 +196,9 @@ final class PostProcessorRegistrationDelegate {
 				orderedPostProcessorNames.add(ppName);
 			}
 			else {
+				/**
+				 * 这里会放入EventListenerMethodProcessor
+				 */
 				nonOrderedPostProcessorNames.add(ppName);
 			}
 		}
@@ -207,6 +218,9 @@ final class PostProcessorRegistrationDelegate {
 		// Finally, invoke all other BeanFactoryPostProcessors.
 		List<BeanFactoryPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size());
 		for (String postProcessorName : nonOrderedPostProcessorNames) {
+			/**
+			 * 创建bean EventListenerMethodProcessor，并invoke
+			 */
 			nonOrderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
 		}
 		invokeBeanFactoryPostProcessors(nonOrderedPostProcessors, beanFactory);

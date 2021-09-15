@@ -280,12 +280,14 @@ public class AnnotatedBeanDefinitionReader {
 				}
 			}
 		}
-		//自定义注解
+
+		// 正常启动流程这里传入的是null
 		if (customizers != null) {
 			for (BeanDefinitionCustomizer customizer : customizers) {
 				customizer.customize(abd);
 			}
 		}
+
 		//只是BeanDefinition和beanName的封装，
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
 		//代理模型TODO

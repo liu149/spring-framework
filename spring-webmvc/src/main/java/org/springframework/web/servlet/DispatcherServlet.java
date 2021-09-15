@@ -498,7 +498,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
-	 *
+	 * DispatcherServlet本身只是做一个请求的转发
+	 * 真正处理请求的是这些处理器映射器、处理器适配器、视图解析器等，所以需要在这里进行初始化
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
@@ -517,6 +518,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		initHandlerExceptionResolvers(context);
 
 		initRequestToViewNameTranslator(context);
+		// 视图解析器
 		initViewResolvers(context);
 		initFlashMapManager(context);
 	}
@@ -1017,7 +1019,6 @@ public class DispatcherServlet extends FrameworkServlet {
 		HttpServletRequest processedRequest = request;
 		HandlerExecutionChain mappedHandler = null;
 		boolean multipartRequestParsed = false;
-		// 处理异步请求
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 
 		try {
@@ -1027,18 +1028,18 @@ public class DispatcherServlet extends FrameworkServlet {
 			try {
 				// 检查是否是multipartRequest
 				processedRequest = checkMultipart(request);
+
 				// 如果是一个multipartRequest，判断是否已经处理完了
 				multipartRequestParsed = (processedRequest != request);
 
-				// Determine handler for the current request.
-				// 找到处理请求的映射处理器
+				// 通过处理器映射器找到处理器执行链HandlerExecutionChain
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
 					noHandlerFound(processedRequest, response);
 					return;
 				}
-				// 通过处理映射器找到处理适配器
-				// Determine handler adapter for the current request.
+
+				// 因为Handler有多种实现方式，所以有多种处理器适配器去处理不同的请求
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 				// LastModified
 				// Process last-modified header, if supported by the handler.
@@ -1050,27 +1051,28 @@ public class DispatcherServlet extends FrameworkServlet {
 						return;
 					}
 				}
+
 				/**
-				 * 拦截对handler的执行，在HandlerMapping已经确定好合适的handler之后，在HandlerAdapter调用handler
-				 * 之前执行
-				 * HandlerExecutionChain包含Interceptors和handler
-				 * HandlerExecutionChain调用applyPreHandle，会调用所有的Interceptor中的applyPreHandle
-				 * 当其中某个Interceptor的applyPreHandle返回false，表示会从拦截器链中退出
+				 * HandlerExecutionChain中包含了要执行都handler和相关intercepter
+				 * 在这里执行拦截器都前置方法
 				 */
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
-				// HandlerAdaptor
-				// Actually invoke the handler.
-				// 当Controller是通过implements Controller接口实现的时候用SimpleControllerHandlerAdapter中直接调用handleRequest返回视图模型
+
+				/**
+				 * HandlerAdaptor执行handler，返回模型视图
+				 */
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
+
 				// 如果mv中没有view，就设置一个默认的
 				applyDefaultViewName(processedRequest, mv);
-				// 执行拦截器中的postHandle
+
+				// 执行拦截器中的后置方法
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
@@ -1081,6 +1083,8 @@ public class DispatcherServlet extends FrameworkServlet {
 				// making them available for @ExceptionHandler methods and other scenarios.
 				dispatchException = new NestedServletException("Handler dispatch failed", err);
 			}
+
+			// 对模型视图进行渲染
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
 		catch (Exception ex) {
@@ -1130,6 +1134,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		boolean errorView = false;
 
+		// 处理异常情况
 		if (exception != null) {
 			if (exception instanceof ModelAndViewDefiningException) {
 				logger.debug("ModelAndViewDefiningException encountered", exception);
@@ -1141,8 +1146,8 @@ public class DispatcherServlet extends FrameworkServlet {
 				errorView = (mv != null);
 			}
 		}
-		// 处理视图
-		// Did the handler return a view to render?
+
+		// 对mv进行渲染
 		if (mv != null && !mv.wasCleared()) {
 			render(mv, request, response);
 			if (errorView) {
@@ -1294,7 +1299,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
-	 * 默认情况下是有四个HandlerAdapter
+	 * 默认情况下是有四个HandlerAdapter,都定义在DispatcherServlet.properties中
+	 * 分别可以调用不同类型都handler
 	 * HttpRequestHandlerAdapter、SimpleControllerHandlerAdapter、RequestMappingHandlerAdapter、HandlerFunctionAdapter
 	 * 这里的判断很简单，就是判断你的Controller实现的是哪一个接口，如实现Controller，则对应的是SimpleControllerHandlerAdapter
 	 * Return the HandlerAdapter for this handler object.
@@ -1384,7 +1390,8 @@ public class DispatcherServlet extends FrameworkServlet {
 		View view;
 		String viewName = mv.getViewName();
 		if (viewName != null) {
-			// We need to resolve the view name.得到View，InternalResourceView
+
+			// 解析viewName得到视图，view中有定义完整的视图所在的路径
 			view = resolveViewName(viewName, mv.getModelInternal(), locale, request);
 			if (view == null) {
 				throw new ServletException("Could not resolve view with name '" + mv.getViewName() +
@@ -1408,6 +1415,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			if (mv.getStatus() != null) {
 				response.setStatus(mv.getStatus().value());
 			}
+			// 对视图进行渲染，将model填充
 			view.render(mv.getModelInternal(), request, response);
 		}
 		catch (Exception ex) {

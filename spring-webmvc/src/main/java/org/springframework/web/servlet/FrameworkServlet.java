@@ -561,6 +561,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #setContextConfigLocation
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
+
 		WebApplicationContext rootContext =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
@@ -598,7 +599,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
 			// refreshed -> trigger initial onRefresh manually here.
-			synchronized (this.onRefreshMonitor) {//这里手动刷新一次webApplicationContext
+			synchronized (this.onRefreshMonitor) {
+				//这里手动刷新一次webApplicationContext
 				onRefresh(wac);//这里调用的是DispatcherServlet
 			}
 		}
